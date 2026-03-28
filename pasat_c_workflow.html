@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PASAT-C - Sistema Integrado v2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            color: #667eea;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+            padding: 0;
+            z-index: 1000;
+        }
+
+        .fullscreen-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .fullscreen-btn:active {
+            transform: scale(0.95);
+        }
+
+        body:fullscreen {
+            padding: 0;
+        }
+
+        body:-webkit-full-screen {
+            padding: 0;
+        }
+
+        body:-moz-full-screen {
+            padding: 0;
+        }
+
+        body:-ms-fullscreen {
+            padding: 0;
+        }
+
+        body:fullscreen .container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            padding: 60px 40px 40px;
+            overflow-y: auto;
+        }
+
+        body:-webkit-full-screen .container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            padding: 60px 40px 40px;
+            overflow-y: auto;
+        }
+
+        body:-moz-full-screen .container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            padding: 60px 40px 40px;
+            overflow-y: auto;
+        }
+
+        body:-ms-fullscreen .container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            padding: 60px 40px 40px;
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1em;
+        }
+
+        .section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #cbd5e0;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active {
+            background: #48bb78;
+        }
+
+        .status-indicator.warning {
+            background: #ed8936;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .device-status {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .device-item {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .device-item.ready {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .device-item.pending {
+            border-color: #ed8936;
+            background: #fffaf0;
+        }
+
+        .device-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .device-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .device-state {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+            margin: 10px 0;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .mode-selector {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .mode-selector label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .radio-option:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .radio-option.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .radio-option .mode-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .radio-option .mode-desc {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        }
+
+        button.success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        button.danger {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .timer-display {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .timer-label {
+            font-size: 1.1em;
+            color: #718096;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .timer-value {
+            font-size: 4em;
+            font-weight: 700;
+            color: #667eea;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-value.warning {
+            color: #ed8936;
+        }
+
+        .timer-value.danger {
+            color: #f56565;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 1s linear;
+        }
+
+        .notification-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            z-index: 9999;
+            text-align: center;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 500px;
+        }
+
+        .notification-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .notification-popup .icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .notification-popup h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .notification-popup p {
+            color: #718096;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .notification-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 9998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .notification-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .test-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .number-display {
+            font-size: 120px;
+            font-weight: 300;
+            color: #2d3748;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .answer-btn {
+            font-size: 28px;
+            font-weight: 600;
+            padding: 30px;
+            border: 3px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            color: #2d3748;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .answer-btn:hover:not(:disabled) {
+            background: #f7fafc;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .answer-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .test-mode-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #fbbf24;
+            color: #78350f;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .breathing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .breathing-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .breathing-content {
+            text-align: center;
+            color: white;
+            padding: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            max-width: 600px;
+        }
+
+        .breathing-countdown {
+            font-size: 150px;
+            font-weight: 700;
+            margin: 30px 0;
+            animation: countdownPulse 1s ease-in-out;
+        }
+
+        @keyframes countdownPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .breathing-instruction {
+            font-size: 2.5em;
+            font-weight: 600;
+            margin: 20px 0;
+            line-height: 1.4;
+        }
+
+        .breathing-subtext {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-top: 15px;
+        }
+
+        .breathing-timer {
+            font-size: 100px;
+            font-weight: 700;
+            margin: 40px 0;
+        }
+
+        .breathing-circle {
+            width: 250px;
+            height: 250px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            margin: 40px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .breathing-circle.animate-breathe {
+            animation: breatheAnimation 4s ease-in-out infinite;
+        }
+
+        @keyframes breatheAnimation {
+            0%, 100% { 
+                transform: scale(1); 
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            50% { 
+                transform: scale(1.3); 
+                border-color: rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        .breathing-circle-text {
+            font-size: 2em;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-overlay" id="notificationOverlay"></div>
+    
+    <div class="notification-popup" id="notificationPopup">
+        <div class="icon">✅</div>
+        <h2 id="notificationTitle">Fase Concluída!</h2>
+        <p id="notificationMessage">Podes continuar para o próximo passo.</p>
+        <button onclick="closeNotification()">Continuar</button>
+    </div>
+
+    <div class="breathing-overlay" id="breathingOverlay">
+        <div class="breathing-content">
+            <div id="breathingCountdown" class="breathing-countdown hidden">3</div>
+            <div id="breathingInstruction" class="breathing-instruction"></div>
+            <div id="breathingSubtext" class="breathing-subtext"></div>
+            <div id="breathingCircle" class="breathing-circle hidden">
+                <div class="breathing-circle-text" id="breathingCircleText"></div>
+            </div>
+            <div id="breathingTimer" class="breathing-timer hidden">15</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Ativar/Desativar Ecrã Completo">
+            <span id="fullscreenIcon">⛶</span>
+        </button>
+
+        <h1>🧠 PASAT-C</h1>
+        <p class="subtitle">Sistema Integrado de Aquisição Multimodal</p>
+
+        <!-- TELA 1: CONFIGURAÇÃO INICIAL -->
+        <div id="setupScreen" class="screen active">
+            <div class="section">
+                <h2>📋 Configuração da Sessão</h2>
+                <label for="participantId" style="display:block; margin:15px 0 8px; color:#2d3748; font-weight:600;">
+                    ID do Participante:
+                </label>
+                <input type="text" id="participantId" placeholder="Ex: P001">
+                
+                <div class="mode-selector">
+                    <label>Duração dos Testes:</label>
+                    <div class="radio-group">
+                        <div class="radio-option selected" onclick="selectMode('real')">
+                            <input type="radio" name="testMode" value="real" id="modeReal" checked>
+                            <div class="mode-title">🎯 Modo Real</div>
+                            <div class="mode-desc">GT: 5min | PASAT: 2.5min</div>
+                        </div>
+                        <div class="radio-option" onclick="selectMode('test')">
+                            <input type="radio" name="testMode" value="test" id="modeTest">
+                            <div class="mode-title">⚡ Modo Teste</div>
+                            <div class="mode-desc">GT: 20s | PASAT: 20s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startSession()">🚀 Iniciar Sessão</button>
+            <button onclick="startTrainingMode()" class="secondary">🎓 Modo Treino</button>
+        </div>
+
+        <!-- TELA 2: SINCRONIZAÇÃO DE DISPOSITIVOS -->
+        <div id="devicesScreen" class="screen">
+            <div class="section">
+                <h2>
+                    <span class="status-indicator active"></span>
+                    Dispositivos de Aquisição
+                    <span id="modeBadge" class="hidden test-mode-badge">MODO TESTE</span>
+                </h2>
+                
+                <div class="device-status">
+                    <div class="device-item" id="xenicsStatus">
+                        <div class="device-icon">📹</div>
+                        <div class="device-name">Xenics</div>
+                        <div class="device-state">Aguardando...</div>
+                    </div>
+                    
+                    <div class="device-item" id="usrpStatus">
+                        <div class="device-icon">📡</div>
+                        <div class="device-name">USRP</div>
+                        <div class="device-state">Aguardando...</div>
+                    </div>
+                    
+                    <div class="device-item pending" id="biopacStatus">
+                        <div class="device-icon">💓</div>
+                        <div class="device-name">Biopac</div>
+                        <div class="device-state">Manual</div>
+                    </div>
+                </div>
+
+                <button id="startDevicesBtn" onclick="startDevices()">
+                    🎬 Iniciar Xenics + USRP
+                </button>
+
+                <div id="biopacConfirmSection" class="hidden" style="margin-top:20px; padding:20px; background:#fffaf0; border-radius:8px; border:2px solid #ed8936;">
+                    <p style="color:#c05621; font-weight:600; margin-bottom:15px;">
+                        ⚠️ <strong>AÇÃO NECESSÁRIA:</strong><br>
+                        Inicia a gravação no Biopac MP36 agora e clica abaixo quando estiver pronto.
+                    </p>
+                    <button onclick="confirmBiopac()" class="success">
+                        ✅ Biopac Pronto
+                    </button>
+                </div>
+            </div>
+
+            <button id="continueToExperimentBtn" onclick="goToExperiment()" class="hidden success">
+                ▶️ Continuar para Experiência
+            </button>
+        </div>
+
+        <!-- TELA 3: WORKFLOW EXPERIMENTAL -->
+        <div id="experimentScreen" class="screen">
+            <div class="section">
+                <h2>
+                    <span class="status-indicator active"></span>
+                    Sessão Experimental
+                    <span id="modeBadgeExperiment" class="hidden test-mode-badge">MODO TESTE</span>
+                </h2>
+                
+                <p style="color:#718096; margin-bottom:20px;">
+                    Sessão: <strong id="sessionIdDisplay">-</strong>
+                </p>
+
+                <button id="groundtruthInitialBtn" onclick="prepareGroundtruthInitial()">
+                    <span id="groundtruthInitialBtnText">📊 Iniciar Groundtruth Inicial (5min)</span>
+                </button>
+
+                <div id="groundtruthInitialTimer" class="hidden">
+                    <div class="timer-display">
+                        <div class="timer-label" id="groundtruthInitialLabel">⏱️ Groundtruth Inicial a decorrer...</div>
+                        <div class="timer-value" id="groundtruthInitialValue">5:00</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="groundtruthInitialProgress"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin:40px 0; border-top:2px solid #e2e8f0;"></div>
+
+                <div id="pasatSection" class="hidden">
+                    <h3 style="color:#2d3748; margin-bottom:20px;">🧪 Testes PASAT-C (2.5min cada)</h3>
+                    
+                    <div class="test-selector">
+                        <button id="pasat1Btn" onclick="preparePASAT(1, 3.5)" disabled>
+                            ▶️ PASAT 1<br><small>(3.5s intervalos)</small>
+                        </button>
+                        <button id="pasat2Btn" onclick="preparePASAT(2, 2.5)" disabled>
+                            ▶️ PASAT 2<br><small>(2.5s intervalos)</small>
+                        </button>
+                        <button id="pasat3Btn" onclick="preparePASAT(3, 1.5)" disabled>
+                            ▶️ PASAT 3<br><small>(1.5s intervalos)</small>
+                        </button>
+                    </div>
+
+                    <div id="pasatTimer" class="hidden">
+                        <div class="timer-display">
+                            <div class="timer-label" id="pasatTimerLabel">⏱️ PASAT a decorrer...</div>
+                            <div class="timer-value" id="pasatTimerValue">2:30</div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="pasatProgress"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin:40px 0; border-top:2px solid #e2e8f0;"></div>
+
+                <div id="groundtruthFinalSection" class="hidden">
+                    <button id="groundtruthFinalBtn" onclick="prepareGroundtruthFinal()">
+                        <span id="groundtruthFinalBtnText">📊 Iniciar Groundtruth Final (5min)</span>
+                    </button>
+
+                    <div id="groundtruthFinalTimer" class="hidden">
+                        <div class="timer-display">
+                            <div class="timer-label" id="groundtruthFinalLabel">⏱️ Groundtruth Final a decorrer...</div>
+                            <div class="timer-value" id="groundtruthFinalValue">5:00</div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="groundtruthFinalProgress"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin:40px 0; border-top:2px solid #e2e8f0;"></div>
+
+                <button id="stopDevicesBtn" onclick="stopDevices()" class="danger hidden">
+                    ⏹️ Parar Todos os Dispositivos
+                </button>
+            </div>
+        </div>
+
+        <!-- TELA 4: TESTE PASAT -->
+        <div id="pasatTestScreen" class="screen">
+            <div class="section">
+                <h2 id="pasatTestTitle">PASAT-C Teste 1</h2>
+                
+                <div class="number-display" id="numberDisplay">-</div>
+                
+                <div class="answer-buttons">
+                    <button class="answer-btn" onclick="selectAnswer(0)" disabled>?</button>
+                    <button class="answer-btn" onclick="selectAnswer(1)" disabled>?</button>
+                    <button class="answer-btn" onclick="selectAnswer(2)" disabled>?</button>
+                    <button class="answer-btn" onclick="selectAnswer(3)" disabled>?</button>
+                </div>
+
+                <p style="text-align:center; color:#718096; margin-top:15px;">
+                    Clica na resposta correta (soma do número atual com o anterior)
+                </p>
+
+                <div class="progress-bar-container" style="margin-top:30px;">
+                    <div class="progress-bar" id="pasatTestProgress"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA 5: MODO TREINO -->
+        <div id="trainingScreen" class="screen">
+            <div class="section">
+                <h2>🎓 Modo Treino</h2>
+                
+                <p style="color:#718096; margin-bottom:20px;">
+                    15 números para prática (sem gravação nos dispositivos)
+                </p>
+
+                <div class="number-display" id="trainingNumberDisplay">-</div>
+                
+                <div class="answer-buttons">
+                    <button class="answer-btn" onclick="selectTrainingAnswer(0)" disabled>?</button>
+                    <button class="answer-btn" onclick="selectTrainingAnswer(1)" disabled>?</button>
+                    <button class="answer-btn" onclick="selectTrainingAnswer(2)" disabled>?</button>
+                    <button class="answer-btn" onclick="selectTrainingAnswer(3)" disabled>?</button>
+                </div>
+
+                <div id="trainingFeedback" style="text-align:center; margin-top:20px; font-size:1.3em; font-weight:600; min-height:40px;"></div>
+
+                <div class="progress-bar-container" style="margin-top:30px;">
+                    <div class="progress-bar" id="trainingProgress"></div>
+                </div>
+
+                <button onclick="exitTraining()" class="secondary" style="margin-top:30px;">
+                    ← Voltar ao Início
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+        
+        let sessionId = '';
+        let participantId = '';
+        let testMode = 'real';
+        let groundtruthDuration = 300;
+        let pasatDuration = 150;
+        
+        let currentPasatTest = 0;
+        let pasatResults = { test1: null, test2: null, test3: null };
+        let currentPasatInterval = null;
+        let currentPasatStartTime = null;
+        let currentIndex = 0;
+        let numbers = [];
+        let correctAnswers = [];
+        let responses = [];
+        let currentOptions = [];
+        let startTime = null;
+        let trainingMode = false;
+        let trainingCount = 0;
+        let trainingNumbers = [];
+        let trainingCorrectAnswers = [];
+        let trainingResponses = [];
+
+        // ============================================
+        // BREATHING PREPARATION
+        // ============================================
+
+        async function startBreathingPreparation(callback) {
+            const overlay = document.getElementById('breathingOverlay');
+            const countdown = document.getElementById('breathingCountdown');
+            const instruction = document.getElementById('breathingInstruction');
+            const subtext = document.getElementById('breathingSubtext');
+            const circle = document.getElementById('breathingCircle');
+            const circleText = document.getElementById('breathingCircleText');
+            const timer = document.getElementById('breathingTimer');
+
+            overlay.classList.add('show');
+
+            countdown.classList.remove('hidden');
+            instruction.textContent = 'Prepara-te...';
+            subtext.textContent = '';
+
+            for (let i = 3; i >= 1; i--) {
+                countdown.textContent = i;
+                countdown.style.animation = 'none';
+                setTimeout(() => {
+                    countdown.style.animation = 'countdownPulse 1s ease-in-out';
+                }, 10);
+                await sleep(1000);
+            }
+
+            countdown.classList.add('hidden');
+
+            instruction.textContent = '🫁 Respira Fundo';
+            subtext.textContent = '3 respirações profundas';
+            circle.classList.remove('hidden');
+            circle.classList.add('animate-breathe');
+
+            for (let i = 1; i <= 3; i++) {
+                circleText.textContent = i + '/3';
+                await sleep(4000);
+            }
+
+            circle.classList.add('hidden');
+            circle.classList.remove('animate-breathe');
+
+            instruction.textContent = '🛑 Sustenha a Respiração';
+            subtext.textContent = 'Mantenha o ar nos pulmões';
+            timer.classList.remove('hidden');
+
+            for (let i = 5; i >= 0; i--) {
+                timer.textContent = i;
+                if (i <= 3) {
+                    timer.style.color = '#fbbf24';
+                }
+                await sleep(1000);
+            }
+
+            timer.classList.add('hidden');
+            instruction.textContent = '✅ Pode Respirar Normalmente';
+            subtext.textContent = 'O teste vai começar...';
+            await sleep(3000);
+
+            overlay.classList.remove('show');
+            
+            timer.style.color = 'white';
+            
+            if (callback) {
+                callback();
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ============================================
+        // PREPARAÇÃO DOS TESTES - CORRIGIDO ✅
+        // ============================================
+
+        function prepareGroundtruthInitial() {
+            startBreathingPreparation(() => {
+                // ✅ MARCAR AQUI (depois da animação completa)
+                markEvent('GROUNDTRUTH_START');
+                startGroundtruthInitial();
+            });
+        }
+
+        function prepareGroundtruthFinal() {
+            startBreathingPreparation(() => {
+                // ✅ MARCAR AQUI
+                markEvent('GROUNDTRUTH_FINAL_START');
+                startGroundtruthFinal();
+            });
+        }
+
+        function preparePASAT(testNumber, interval) {
+            startBreathingPreparation(() => {
+                // ✅ MARCAR AQUI
+                markEvent(`PASAT${testNumber}_START`, {interval: interval});
+                startPASAT(testNumber, interval);
+            });
+        }
+
+        // ============================================
+        // FULLSCREEN
+        // ============================================
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        function updateFullscreenIcon() {
+            const icon = document.getElementById('fullscreenIcon');
+            if (document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement || 
+                document.msFullscreenElement) {
+                icon.textContent = '⛶';
+            } else {
+                icon.textContent = '⛶';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+
+        // ============================================
+        // SELEÇÃO DE MODO
+        // ============================================
+
+        function selectMode(mode) {
+            testMode = mode;
+            
+            if (mode === 'test') {
+                groundtruthDuration = 20;
+                pasatDuration = 20;
+            } else {
+                groundtruthDuration = 300;
+                pasatDuration = 150;
+            }
+            
+            document.querySelectorAll('.radio-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            event.currentTarget.classList.add('selected');
+            document.getElementById('mode' + (mode === 'real' ? 'Real' : 'Test')).checked = true;
+            
+            console.log('Modo selecionado:', mode, '- GT:', groundtruthDuration, 's | PASAT:', pasatDuration, 's');
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showNotification(title, message, icon = '✅') {
+            const popup = document.getElementById('notificationPopup');
+            const overlay = document.getElementById('notificationOverlay');
+            
+            popup.querySelector('.icon').textContent = icon;
+            document.getElementById('notificationTitle').textContent = title;
+            document.getElementById('notificationMessage').textContent = message;
+            
+            overlay.classList.add('show');
+            popup.classList.add('show');
+        }
+
+        function closeNotification() {
+            document.getElementById('notificationOverlay').classList.remove('show');
+            document.getElementById('notificationPopup').classList.remove('show');
+        }
+
+        // ============================================
+        // SESSÃO
+        // ============================================
+
+        async function startSession() {
+            participantId = document.getElementById('participantId').value.trim();
+            
+            if (!participantId) {
+                alert('⚠️ Por favor, insere o ID do participante');
+                return;
+            }
+
+            try {
+                const resp = await fetch('http://localhost:5000/prepare_session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        participant_id: participantId,
+                        test_mode: testMode,
+                        groundtruth_duration: groundtruthDuration,
+                        pasat_duration: pasatDuration
+                    })
+                });
+
+                const data = await resp.json();
+                sessionId = data.session_id;
+
+                if (testMode === 'test') {
+                    document.getElementById('modeBadge').classList.remove('hidden');
+                    document.getElementById('modeBadgeExperiment').classList.remove('hidden');
+                }
+
+                showScreen('devicesScreen');
+            } catch (error) {
+                alert('❌ Erro ao conectar com servidor: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // DISPOSITIVOS
+        // ============================================
+
+        async function startDevices() {
+            document.getElementById('startDevicesBtn').disabled = true;
+            document.getElementById('startDevicesBtn').textContent = '⏳ Iniciando...';
+
+            try {
+                const resp = await fetch('http://localhost:5000/start_devices', {
+                    method: 'POST'
+                });
+
+                const data = await resp.json();
+
+                if (data.recording_status.xenics) {
+                    const xenics = document.getElementById('xenicsStatus');
+                    xenics.classList.add('ready');
+                    xenics.querySelector('.device-state').textContent = '✅ A gravar';
+                }
+
+                if (data.recording_status.usrp) {
+                    const usrp = document.getElementById('usrpStatus');
+                    usrp.classList.add('ready');
+                    usrp.querySelector('.device-state').textContent = '✅ A gravar';
+                }
+
+                document.getElementById('biopacConfirmSection').classList.remove('hidden');
+                document.getElementById('startDevicesBtn').classList.add('hidden');
+
+            } catch (error) {
+                alert('❌ Erro ao iniciar dispositivos: ' + error.message);
+                document.getElementById('startDevicesBtn').disabled = false;
+                document.getElementById('startDevicesBtn').textContent = '🎬 Iniciar Xenics + USRP';
+            }
+        }
+
+        async function confirmBiopac() {
+            try {
+                await fetch('http://localhost:5000/confirm_biopac', {method: 'POST'});
+
+                const biopac = document.getElementById('biopacStatus');
+                biopac.classList.remove('pending');
+                biopac.classList.add('ready');
+                biopac.querySelector('.device-state').textContent = '✅ Confirmado';
+
+                document.getElementById('biopacConfirmSection').classList.add('hidden');
+                document.getElementById('continueToExperimentBtn').classList.remove('hidden');
+
+            } catch (error) {
+                alert('❌ Erro ao confirmar Biopac: ' + error.message);
+            }
+        }
+
+        async function goToExperiment() {
+            try {
+                await fetch('http://localhost:5000/mark_event', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        event: 'EXPERIMENT_START',
+                        metadata: {
+                            description: 'Momento em que todos os dispositivos estão online e sincronizados',
+                            test_mode: testMode
+                        }
+                    })
+                });
+
+                console.log('✅ EXPERIMENT_START marcado - Este é o t=0 da timeline sincronizada');
+
+            } catch (error) {
+                console.error('❌ Erro ao marcar EXPERIMENT_START:', error);
+            }
+
+            showScreen('experimentScreen');
+            document.getElementById('sessionIdDisplay').textContent = sessionId;
+            
+            const gtText = testMode === 'test' ? '20s' : '5min';
+            document.getElementById('groundtruthInitialBtnText').textContent = `📊 Iniciar Groundtruth Inicial (${gtText})`;
+            document.getElementById('groundtruthFinalBtnText').textContent = `📊 Iniciar Groundtruth Final (${gtText})`;
+        }
+
+        // ============================================
+        // GROUNDTRUTH INICIAL - CORRIGIDO ✅
+        // ============================================
+
+        async function startGroundtruthInitial() {
+            document.getElementById('groundtruthInitialBtn').classList.add('hidden');
+            document.getElementById('groundtruthInitialTimer').classList.remove('hidden');
+
+            // ❌ REMOVIDO DAQUI!
+            // await markEvent('GROUNDTRUTH_START');
+
+            startTimer(
+                'groundtruthInitialValue',
+                'groundtruthInitialProgress',
+                groundtruthDuration,
+                async () => {
+                    await markEvent('GROUNDTRUTH_END');
+                    
+                    showNotification(
+                        '✅ Groundtruth Inicial Concluído!',
+                        'Podes preparar o participante para os testes PASAT.',
+                        '📊'
+                    );
+
+                    document.getElementById('groundtruthInitialTimer').classList.add('hidden');
+                    document.getElementById('pasatSection').classList.remove('hidden');
+                    document.getElementById('pasat1Btn').disabled = false;
+                }
+            );
+        }
+
+        // ============================================
+        // PASAT TESTS - CORRIGIDO ✅
+        // ============================================
+
+        async function startPASAT(testNumber, interval) {
+            currentPasatTest = testNumber;
+            
+            document.getElementById('pasat1Btn').disabled = true;
+            document.getElementById('pasat2Btn').disabled = true;
+            document.getElementById('pasat3Btn').disabled = true;
+
+            document.getElementById('pasatTimer').classList.remove('hidden');
+            document.getElementById('pasatTimerLabel').textContent = `⏱️ PASAT ${testNumber} a decorrer (${interval}s intervalos)...`;
+
+            // ❌ REMOVIDO DAQUI!
+            // await markEvent(`PASAT${testNumber}_START`, {interval: interval});
+
+            showScreen('pasatTestScreen');
+            document.getElementById('pasatTestTitle').textContent = `PASAT-C Teste ${testNumber} (${interval}s intervalos)`;
+            
+            await runPasatTest(interval);
+
+            startTimer(
+                'pasatTimerValue',
+                'pasatProgress',
+                pasatDuration,
+                async () => {
+                    await markEvent(`PASAT${testNumber}_END`);
+                    
+                    clearInterval(currentPasatInterval);
+
+                    const testResults = {
+                        test_number: testNumber,
+                        interval: interval,
+                        correct: responses.filter(r => r && r.correct).length,
+                        incorrect: responses.filter(r => r && !r.correct).length,
+                        omissions: correctAnswers.length - responses.filter(r => r).length,
+                        total_trials: correctAnswers.length,
+                        responses: responses
+                    };
+
+                    try {
+                        await fetch('http://localhost:5000/save_pasat_test_result', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                test_number: testNumber,
+                                results: testResults
+                            })
+                        });
+                        console.log(`✅ Resultados PASAT ${testNumber} salvos`);
+                    } catch (error) {
+                        console.error(`❌ Erro ao salvar PASAT ${testNumber}:`, error);
+                    }
+
+                    showNotification(
+                        `✅ PASAT ${testNumber} Concluído!`,
+                        'Podes fazer uma pausa antes do próximo teste.',
+                        '🧪'
+                    );
+
+                    showScreen('experimentScreen');
+                    document.getElementById('pasatTimer').classList.add('hidden');
+
+                    if (testNumber === 1) {
+                        document.getElementById('pasat2Btn').disabled = false;
+                    } else if (testNumber === 2) {
+                        document.getElementById('pasat3Btn').disabled = false;
+                    } else if (testNumber === 3) {
+                        document.getElementById('groundtruthFinalSection').classList.remove('hidden');
+                    }
+                }
+            );
+        }
+
+        async function runPasatTest(interval) {
+            currentIndex = 0;
+            responses = [];
+            numbers = [];
+            correctAnswers = [];
+
+            currentPasatStartTime = Date.now();
+
+            function showNextNumber() {
+                const elapsed = (Date.now() - currentPasatStartTime) / 1000;
+                if (elapsed >= pasatDuration) {
+                    return;
+                }
+
+                const currentNumber = Math.floor(Math.random() * 9) + 1;
+                numbers.push(currentNumber);
+
+                document.getElementById('numberDisplay').textContent = currentNumber;
+
+                if (currentIndex > 0) {
+                    const correctAnswer = numbers[currentIndex - 1] + currentNumber;
+                    correctAnswers.push(correctAnswer);
+                    startTime = Date.now();
+                    displayOptions(correctAnswer);
+                } else {
+                    const buttons = document.querySelectorAll('#pasatTestScreen .answer-btn');
+                    buttons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.textContent = '?';
+                    });
+                }
+
+                currentIndex++;
+
+                const progress = (elapsed / pasatDuration) * 100;
+                document.getElementById('pasatTestProgress').style.width = Math.min(progress, 100) + '%';
+            }
+
+            showNextNumber();
+            currentPasatInterval = setInterval(showNextNumber, interval * 1000);
+        }
+
+        function displayOptions(correctAnswer) {
+            currentOptions = generateOptions(correctAnswer);
+            const buttons = document.querySelectorAll('#pasatTestScreen .answer-btn');
+            buttons.forEach((btn, i) => {
+                btn.textContent = currentOptions[i];
+                btn.disabled = false;
+                btn.classList.remove('selected');
+            });
+        }
+
+        function generateOptions(correctAnswer) {
+            const options = [correctAnswer];
+            const used = new Set([correctAnswer]);
+
+            while (options.length < 4) {
+                const offset = Math.floor(Math.random() * 11) - 5;
+                const opt = correctAnswer + offset;
+                if (opt > 0 && !used.has(opt)) {
+                    options.push(opt);
+                    used.add(opt);
+                }
+            }
+
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+
+            return options;
+        }
+
+        function selectAnswer(index) {
+            const buttons = document.querySelectorAll('#pasatTestScreen .answer-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[index].classList.add('selected');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const answer = currentOptions[index];
+            const responseTime = (Date.now() - startTime) / 1000;
+            const responseIndex = currentIndex - 2;
+            const isCorrect = answer === correctAnswers[responseIndex];
+
+            responses[responseIndex] = {
+                answer: answer,
+                responseTime: responseTime,
+                correct: isCorrect
+            };
+
+            markEvent('RESPONSE', {
+                answer: answer,
+                trial: currentIndex - 1,
+                correct: isCorrect,
+                response_time: responseTime
+            });
+        }
+
+        // ============================================
+        // GROUNDTRUTH FINAL - CORRIGIDO ✅
+        // ============================================
+
+        async function startGroundtruthFinal() {
+            document.getElementById('groundtruthFinalBtn').classList.add('hidden');
+            document.getElementById('groundtruthFinalTimer').classList.remove('hidden');
+
+            // ❌ REMOVIDO DAQUI!
+            // await markEvent('GROUNDTRUTH_FINAL_START');
+
+            startTimer(
+                'groundtruthFinalValue',
+                'groundtruthFinalProgress',
+                groundtruthDuration,
+                async () => {
+                    await markEvent('GROUNDTRUTH_FINAL_END');
+
+                    showNotification(
+                        '✅ Groundtruth Final Concluído!',
+                        'Experiência terminada. Podes parar os dispositivos.',
+                        '🎉'
+                    );
+
+                    document.getElementById('groundtruthFinalTimer').classList.add('hidden');
+                    document.getElementById('stopDevicesBtn').classList.remove('hidden');
+                }
+            );
+        }
+
+        // ============================================
+        // PARAR DISPOSITIVOS
+        // ============================================
+
+        async function stopDevices() {
+            if (!confirm('⚠️ Tens a certeza que queres parar todos os dispositivos?')) {
+                return;
+            }
+
+            try {
+                await fetch('http://localhost:5000/stop_devices', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pasat_results: pasatResults})
+                });
+
+                alert('✅ Dispositivos parados! Sessão guardada em:\n' + sessionId);
+                location.reload();
+
+            } catch (error) {
+                alert('❌ Erro ao parar dispositivos: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // TIMER GENÉRICO
+        // ============================================
+
+        function startTimer(valueElementId, progressElementId, totalSeconds, onComplete) {
+            let remaining = totalSeconds;
+
+            const valueEl = document.getElementById(valueElementId);
+            const progressEl = document.getElementById(progressElementId);
+
+            valueEl.textContent = formatTime(remaining);
+
+            const interval = setInterval(() => {
+                remaining--;
+
+                valueEl.textContent = formatTime(remaining);
+
+                if (remaining <= 60 && totalSeconds > 60) {
+                    valueEl.classList.add('warning');
+                }
+                if (remaining <= 10) {
+                    valueEl.classList.add('danger');
+                }
+
+                const progress = ((totalSeconds - remaining) / totalSeconds) * 100;
+                progressEl.style.width = progress + '%';
+
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    progressEl.style.width = '100%';
+                    onComplete();
+                }
+            }, 1000);
+        }
+
+        // ============================================
+        // MARCAR EVENTOS
+        // ============================================
+
+        async function markEvent(eventName, metadata = {}) {
+            if (trainingMode) return;
+
+            try {
+                await fetch('http://localhost:5000/mark_event', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({event: eventName, metadata: metadata})
+                });
+            } catch (error) {
+                console.error('Erro ao marcar evento:', error);
+            }
+        }
+
+        // ============================================
+        // MODO TREINO
+        // ============================================
+
+        function startTrainingMode() {
+            trainingMode = true;
+            trainingCount = 0;
+            trainingNumbers = [];
+            trainingCorrectAnswers = [];
+            trainingResponses = [];
+
+            showScreen('trainingScreen');
+            runTraining();
+        }
+
+        function runTraining() {
+            const maxNumbers = 15;
+
+            let countdown = 3;
+            const displayEl = document.getElementById('trainingNumberDisplay');
+            displayEl.textContent = countdown;
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    displayEl.textContent = countdown;
+                } else {
+                    displayEl.textContent = 'GO!';
+                    clearInterval(countdownInterval);
+                    setTimeout(() => {
+                        displayEl.textContent = '-';
+                        showNextTrainingNumber();
+                    }, 500);
+                }
+            }, 1000);
+
+            function showNextTrainingNumber() {
+                if (trainingCount >= maxNumbers) {
+                    endTraining();
+                    return;
+                }
+
+                const currentNumber = Math.floor(Math.random() * 9) + 1;
+                trainingNumbers.push(currentNumber);
+
+                displayEl.textContent = currentNumber;
+
+                const progress = ((trainingCount + 1) / maxNumbers) * 100;
+                document.getElementById('trainingProgress').style.width = progress + '%';
+
+                if (trainingNumbers.length > 1) {
+                    const correctAnswer = trainingNumbers[trainingNumbers.length - 2] + currentNumber;
+                    trainingCorrectAnswers.push(correctAnswer);
+                    displayTrainingOptions(correctAnswer);
+                } else {
+                    const buttons = document.querySelectorAll('#trainingScreen .answer-btn');
+                    buttons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.textContent = '?';
+                    });
+                    setTimeout(() => {
+                        trainingCount++;
+                        showNextTrainingNumber();
+                    }, 3500);
+                }
+            }
+        }
+
+        function displayTrainingOptions(correctAnswer) {
+            const options = generateOptions(correctAnswer);
+            const buttons = document.querySelectorAll('#trainingScreen .answer-btn');
+            buttons.forEach((btn, i) => {
+                btn.textContent = options[i];
+                btn.disabled = false;
+                btn.classList.remove('selected');
+            });
+
+            window.currentTrainingOptions = options;
+            window.currentTrainingCorrect = correctAnswer;
+        }
+
+        function selectTrainingAnswer(index) {
+            const buttons = document.querySelectorAll('#trainingScreen .answer-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            buttons[index].classList.add('selected');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const answer = window.currentTrainingOptions[index];
+            const isCorrect = answer === window.currentTrainingCorrect;
+
+            const feedbackEl = document.getElementById('trainingFeedback');
+            if (isCorrect) {
+                feedbackEl.textContent = '✓ Correto!';
+                feedbackEl.style.color = '#48bb78';
+            } else {
+                feedbackEl.textContent = `✗ Incorreto. Era ${window.currentTrainingCorrect}`;
+                feedbackEl.style.color = '#f56565';
+            }
+
+            setTimeout(() => {
+                feedbackEl.textContent = '';
+                trainingCount++;
+                
+                if (trainingCount >= 15) {
+                    endTraining();
+                } else {
+                    const displayEl = document.getElementById('trainingNumberDisplay');
+                    const currentNumber = Math.floor(Math.random() * 9) + 1;
+                    trainingNumbers.push(currentNumber);
+                    displayEl.textContent = currentNumber;
+
+                    const progress = ((trainingCount + 1) / 15) * 100;
+                    document.getElementById('trainingProgress').style.width = progress + '%';
+
+                    const correctAnswer = trainingNumbers[trainingNumbers.length - 2] + currentNumber;
+                    trainingCorrectAnswers.push(correctAnswer);
+                    displayTrainingOptions(correctAnswer);
+                }
+            }, 1500);
+        }
+
+        function endTraining() {
+            showNotification(
+                '🎓 Treino Concluído!',
+                'Completaste 15 números de prática. Podes voltar ao início.',
+                '✅'
+            );
+        }
+
+        function exitTraining() {
+            trainingMode = false;
+            showScreen('setupScreen');
+        }
+    </script>
+</body>
+</html>
