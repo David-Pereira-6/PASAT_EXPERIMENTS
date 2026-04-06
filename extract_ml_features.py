@@ -1,78 +1,54 @@
 import os
-import json
-import numpy as np
+import argparse
 import pandas as pd
-from scipy.signal import uniform_filter1d
-from scipy.fft import fft
+import numpy as np
+from scipy.signal import hann, fftpack
+from scipy.stats import iqr, entropy
 
-# Configurable constants
-ANALYSIS_BASE_DIR = 'path/to/analysis'  # user to edit
-SESSIONS_BASE_DIR = 'path/to/sessions'  # user to edit
-
-PATTERN_DURATION = 23.0  # seconds
-PHASE_DURATIONS = {'groundtruth': 300, 'pasat': 150}  # seconds
+# Constants
+HR_BAND = (1.2, 3.0)  # Hz
+RR_BAND = (0.2, 0.6)  # Hz
 FPS = 13
 
-# Function to process a single session
-
-def process_session(session):
-    # Paths
-    usrp_data_path = os.path.join(ANALYSIS_BASE_DIR, session, 'usrp', 'data.csv')
-    xenics_frames_path = os.path.join(SESSIONS_BASE_DIR, session, 'xenics', 'npy')
-    markers_path = os.path.join(ANALYSIS_BASE_DIR, session, 'analysis_manual_markers.json')
-    output_path = os.path.join(ANALYSIS_BASE_DIR, session, 'ml_features')
-
+def extract_features(data_csv, markers_json, pattern_duration=23, phase_durations=None):
     # Load data
-    usrp_data = pd.read_csv(usrp_data_path)
-    with open(markers_path, 'r') as f:
-        markers = json.load(f)['markers']
+    data = pd.read_csv(data_csv)
+    markers = pd.read_json(markers_json)
 
-    # Define phases based on markers
-    phases = {
-        'baseline': (markers['GROUNDTRUTH_START'] + PATTERN_DURATION, markers['GROUNDTRUTH_START'] + PATTERN_DURATION + PHASE_DURATIONS['groundtruth']),
-        'pasat1': (markers['PASAT1_START'] + PATTERN_DURATION, markers['PASAT1_START'] + PATTERN_DURATION + PHASE_DURATIONS['pasat']),
-        'pasat2': (markers['PASAT2_START'] + PATTERN_DURATION, markers['PASAT2_START'] + PATTERN_DURATION + PHASE_DURATIONS['pasat']),
-        'pasat3': (markers['PASAT3_START'] + PATTERN_DURATION, markers['PASAT3_START'] + PATTERN_DURATION + PHASE_DURATIONS['pasat']),
-        'recovery': (markers['GROUNDTRUTH_FINAL_START'] + PATTERN_DURATION, markers['GROUNDTRUTH_FINAL_START'] + PATTERN_DURATION + PHASE_DURATIONS['groundtruth'])
-    }
+    # Sample phase durations
+    phase_durations = {'groundtruth': 300, 'pasat': 150} if phase_durations is None else phase_durations
 
-    # Prepare output
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    feature_df = pd.DataFrame()
+    # Implement your extraction logic here
+    # Example placeholder for feature extraction implementation
+    features = []  # Initialize list for features
+    # Iterate for each session
+    for index, row in data.iterrows():
+        feature_dict = {"some_feature": row["some_column"]}
+        features.append(feature_dict)
 
-    for phase_name, (t_start, t_end) in phases.items():
-        # Define subwindows
-        windows = np.arange(t_start, t_end - 30, 15)  # 30s windows with 50% overlap
-        windows = windows[windows > t_start + 30]  # Discard first and last if not enough
-        if len(windows) < 3:
-            continue
+    # Convert to DataFrame at the end
+    features_df = pd.DataFrame(features)
+    return features_df
 
-        # Create features for each window
-        for idx, window_start in enumerate(windows):
-            window_end = window_start + 30  # 30 seconds window
-            # Compute features here...
-            # Placeholder for feature extraction logic
-            features = {'session': session,
-                        'phase': phase_name,
-                        'label_stress': 1 if 'pasat' in phase_name else 0,
-                        't_start': window_start,
-                        't_end': window_end,
-                        'window_idx': idx}
-            feature_df = feature_df.append(features, ignore_index=True)
+def save_features(features_df, session, phase, output_dir):
+    save_path = os.path.join(output_dir, 'features.csv')
+    features_df.to_csv(save_path, index=False)
+    print(f"Features saved to {save_path}")
 
-    # Save features to CSV
-    feature_df.to_csv(os.path.join(output_path, 'features.csv'), index=False)
-
-# Main entry for script execution
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='Generate ML features per session')
-    parser.add_argument('--session', type=str, help='specific session to process')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--analysis-base-dir', type=str, default='EDIT_ME_ANALYSIS_BASE_DIR')
+    parser.add_argument('--sessions-base-dir', type=str, default='EDIT_ME_SESSIONS_BASE_DIR')
+    parser.add_argument('--session', type=str, required=True)
     args = parser.parse_args()
 
-    if args.session:
-        process_session(args.session)
-    else:
-        for session in os.listdir(ANALYSIS_BASE_DIR):
-            process_session(session)
+    # Set base directories from environment, if they exist
+    ANALYSIS_BASE_DIR = os.getenv('ANALYSIS_BASE_DIR', args.analysis_base_dir)
+    SESSIONS_BASE_DIR = os.getenv('SESSIONS_BASE_DIR', args.sessions_base_dir)
+
+    # Now call extract_features with the proper paths
+    data_csv = os.path.join(ANALYSIS_BASE_DIR, 'usrp', 'data.csv')
+    markers_json = os.path.join(ANALYSIS_BASE_DIR, 'analysis_manual_markers.json')
+    features_df = extract_features(data_csv, markers_json)
+    # Save the features for this session
+    save_features(features_df, args.session, phase='YourPhase', output_dir=os.path.join(ANALYSIS_BASE_DIR, 'ml_features'))
